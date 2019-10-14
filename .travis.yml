@@ -1,0 +1,37 @@
+language: generic
+sudo: required
+services: 
+  - docker
+
+before_install:
+  - docker build -t bertiewooster/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true bertiewooster/react-test npm test
+
+after_success:
+  - docker build -t bertiewooster/multi-client ./client
+  - docker build -t bertiewooster/multi-nginx ./nginx
+  - docker build -t bertiewooster/multi-server ./server
+  - docker build -t bertiewooster/multi-worker ./worker
+
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  - docker push bertiewooster/multi-client
+  - docker push bertiewooster/multi-nginx
+  - docker push bertiewooster/multi-server
+  - docker push bertiewooster/multi-worker
+
+
+#deploy:
+#  provider: elasticbeanstalk
+#  region: "us-east-2"
+#  app: "docker-react"
+#  env: "DockerReact-env"
+#  bucket_name: "elasticbeanstalk-us-east-2-248815380247"
+#  bucket_path: "docker-react"
+#  on:
+#    branch: master
+#  access_key_id: "$AWS_ACCESS_KEY"
+#  secret_access_key: "$AWS_SECRET_KEY"
+#    secure: 
